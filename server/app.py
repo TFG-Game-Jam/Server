@@ -8,8 +8,12 @@ CORS(app)
 
 state = {
     'oxygen': 100,
+    'players': [],
 }
-queued_actions = []
+actions = {
+    'port': False,
+    'starboard': False,
+}
 
 @app.route('/create-game')
 def create_game():
@@ -23,30 +27,41 @@ def get_games():
     return jsonify([])
 
 
+@app.route('/join-game')
+def join_game():
+    state['players'].append(request.args.get('username', ''))
+    return jsonify('')
+
+
+@app.route('/get-players')
+def get_player_count():
+    return jsonify(state['players'])
+
+
 @app.route('/get-state')
 def get_oxigen_level():
     return jsonify(state)
 
 
 @app.route('/set-state')
-def login():
+def set_state():
     for key in state:
         value = request.args.get(key)
         if value:
             state[key] = value
-    return ''
+    return jsonify('')
 
 
-@app.route('/act')
-def act():
-    action = request.args['action']
-    queued_actions.append(action)
-    return ''
+@app.route('/set-actions')
+def set_actions():
+    for key in actions:
+        value = request.args.get(key)
+        if value:
+            actions[key] = value
+    print(actions)
+    return jsonify('')
 
 
 @app.route('/get-actions')
 def get_actions():
-    actions = []
-    while queued_actions:
-        actions.append(queued_actions.pop())
     return jsonify(actions)
