@@ -7,12 +7,18 @@ app = Flask(__name__)
 CORS(app)
 
 state = {
-    'oxygen': 100,
+    'energy': 100,
+    'shotsTaken': 0,
     'players': [],
 }
 actions = {
     'port': False,
     'starboard': False,
+    'loadPurple': False,
+    'loadGreen': False,
+    'loadCyan': False,
+    'loadWhite': False,
+    'fixGenerator': False,
 }
 
 @app.route('/create-game')
@@ -43,10 +49,10 @@ def get_oxigen_level():
     return jsonify(state)
 
 
-@app.route('/set-state')
+@app.route('/set-state', methods=['POST'])
 def set_state():
     for key in state:
-        value = request.args.get(key)
+        value = request.args.get(key, request.form.get(key))
         if value:
             state[key] = value
     return jsonify('')
