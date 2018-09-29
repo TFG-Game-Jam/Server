@@ -6,6 +6,9 @@ from server import datastore
 app = Flask(__name__)
 CORS(app)
 
+state = {
+    'oxygen': 100,
+}
 queued_actions = []
 
 @app.route('/create-game')
@@ -22,7 +25,16 @@ def get_games():
 
 @app.route('/get-state')
 def get_oxigen_level():
-    return jsonify(datastore.get_all())
+    return jsonify(state)
+
+
+@app.route('/set-state')
+def login():
+    for key in state:
+        value = request.args.get(key)
+        if value:
+            state[key] = value
+    return ''
 
 
 @app.route('/act')
