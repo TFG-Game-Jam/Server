@@ -28,6 +28,8 @@ actions = {
     'aimAngle': 0.,
     'roomState': [0, 0, 0],
 }
+projectile_colors = ['loadPurple', 'loadGreen', 'loadCyan', 'loadWhite']
+shuffled_rooms = [None, None, None]
 
 
 @app.route('/create-game')
@@ -62,7 +64,10 @@ def get_state():
 @app.route('/set-state', methods=['POST', 'GET'])
 def set_state():
     shots_taken = int(request.args.get('shotsTaken', request.form.get('shotsTaken', state['shotsTaken'])))
-    if shots_taken != state['shotsTaken']:
+    old_shots_taken = int(state['shotsTaken'])
+    if shots_taken != old_shots_taken:
+        if shots_taken < old_shots_taken:  # New game session
+            state['shotsTaken'] = 0
         for _ in range(shots_taken - int(state['shotsTaken'])):
             rooms = [0, 1, 2]
             random.shuffle(rooms)
@@ -80,9 +85,35 @@ def set_state():
 
 @app.route('/set-actions')
 def set_actions():
+    if actions['roomState'][0] == 1:
+        if shuffled_rooms[0] is None:
+            shuffled_rooms[0] = random.choice([False, True])
+    else:
+        shuffled_rooms[0] = None
+    if actions['roomState'][1] == 1:
+        if shuffled_rooms[1] is None:
+            shuffled_rooms[1] = projectile_colors[:]
+            random.shuffle(shuffled_rooms[1])
+    else:
+        shuffled_rooms[1] = None
+    if actions['roomState'][2] == 1:
+        if shuffled_rooms[2] is None:
+            shuffled_rooms[2] = random.random() * 360
+    else:
+        shuffled_rooms[2] = None
+
     for key in actions:
         value = request.args.get(key)
-        if value and (key != 'aimAngle' or state['energy']):
+        if value:
+            if shuffled_rooms[0] and (key == 'port' or key == 'starboard'):
+                key = 'starboard' if key == 'port' else 'port'
+            if shuffled_rooms[1] and key.startswith('load'):
+                key = shuffled_rooms[1][projectile_colors.index(key)]
+            if key == 'aimAngle':
+                if not state['energy'] or actions['roomState'][2] == 2:
+                    continue
+                if shuffled_rooms[2]:
+                    value += shuffled_rooms[2]
             actions[key] = value
     return jsonify('')
 
@@ -96,6 +127,10 @@ def get_actions():
             actions[key] = False
         else:
             actions[key] = str(actions[key]).lower().startswith('true')
+    if actions['roomState'][0] == 2:  # Motors
+        actions['port'] = actions['starboard'] = False
+    if actions['roomState'][1] == 2:  # Weapon arming
+        actions['loadPurple'] = actions['loadGreen'] = actions['loadCyan'] = actions['loadWhite'] = False
     return jsonify(actions)
 
 
@@ -104,9 +139,9 @@ def update_energy():
     state['lastUpdate'] = time.time()
     print('Energy: {}'.format(state['energy']))
     if str(actions['fixGenerator']).lower().startswith('true'):
-        state['energy'] += 5 * delta
+        state['energy'] += 8 * delta
     else:
-        state['energy'] -= 2 * delta
+        state['energy'] -= delta
     state['energy'] = min(max(state['energy'], 0), 100)
 
 

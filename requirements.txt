@@ -1,0 +1,9 @@
+Click==7.0
+Flask==1.0.2
+Flask-Cors==3.0.6
+itsdangerous==0.24
+Jinja2==2.10
+MarkupSafe==1.0
+-e git+git@github.com:TFG-Game-Jam/Server.git@3b15f02f156be815de7fb1338f9a2bf61eedff5f#egg=server
+six==1.11.0
+Werkzeug==0.14.1
